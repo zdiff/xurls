@@ -80,11 +80,14 @@ const (
 )
 
 // AnyScheme can be passed to [StrictMatchingScheme] to match any scheme
-// followed by "://", as well as the schemes in [SchemesNoAuthority]
-// followed by ":" at the start of a word.
+// followed by "://", including JDBC subprotocols, as well as the schemes
+// in [SchemesNoAuthority] followed by ":" at the start of a word.
 // It is built at init time, so later changes to [SchemesNoAuthority] do not
 // affect it.
-var AnyScheme = `(?:[a-zA-Z][a-zA-Z0-9.\-+]*://|` + noAuthorityExp() + `)`
+var AnyScheme = `(?:(?:` + jdbcScheme + `|[a-zA-Z][a-zA-Z0-9.\-+]*)://|` + noAuthorityExp() + `)`
+
+// jdbcScheme matches JDBC schemes with subprotocols, as in "jdbc:mysql://".
+const jdbcScheme = `jdbc(?::[a-z0-9.\-]+)+`
 
 // SchemesNoAuthority is a sorted list of some well-known url schemes that are
 // followed by ":" instead of "://". The list includes both officially
@@ -152,7 +155,7 @@ func noAuthorityExp() string {
 }
 
 func strictExp() string {
-	schemes := `(?:(?i)(?:` + anyOf(Schemes...) + `|` + anyOf(SchemesUnofficial...) + `)://|` + noAuthorityExp() + `)`
+	schemes := `(?:(?i)(?:` + anyOf(Schemes...) + `|` + anyOf(SchemesUnofficial...) + `|` + jdbcScheme + `)://|` + noAuthorityExp() + `)`
 	return schemes + pathCont
 }
 

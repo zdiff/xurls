@@ -219,9 +219,11 @@ var constantTestCases = []testCase{
 	{`postgres://user:pass@host.com:5432/path?k=v#f`, true},
 	{`zoommtg://zoom.us/join?confno=1234&pwd=xxx`, true},
 	{`zoomus://zoom.us/join?confno=1234&pwd=xxx`, true},
-	{`jdbc:postgresql://db/app`, `postgresql://db/app`},         // TODO: include the `jdbc:` prefix
-	{`jdbc:mysql://localhost/db`, nil},                          // TODO: match
-	{`jdbc:aws-wrapper:postgresql://h/db`, `postgresql://h/db`}, // TODO: include the `jdbc:aws-wrapper:` prefix
+	{`jdbc:postgresql://db/app`, true},
+	{`jdbc:mysql://localhost/db`, true},
+	{`jdbc:aws-wrapper:postgresql://h/db`, true},
+	{`jdbc:hsqldb:hsql://localhost/db`, true},
+	{`jdbc://localhost/db`, true},
 }
 
 func TestRegexes(t *testing.T) {
@@ -459,7 +461,7 @@ func TestStrictMatchingSchemeAny(t *testing.T) {
 		{`randomtexthttp://foo.bar/etc`, true},
 		{`mailto:foo`, true},
 		{`xmailto:foo`, nil},
-		{`jdbc:mysql://localhost/db`, `mysql://localhost/db`}, // TODO: include the `jdbc:` prefix
+		{`jdbc:mysql://localhost/db`, true},
 	})
 }
 
