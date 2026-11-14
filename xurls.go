@@ -171,7 +171,7 @@ func relaxedExp() string {
 	// Use \b to make sure ASCII TLDs are immediately followed by a word break.
 	// We can't do that with unicode TLDs, as they don't see following
 	// whitespace as a word break.
-	tlds := `(?:(?i)` + punycode + `|` + anyOf(append(asciiTLDs, PseudoTLDs...)...) + `\b|` + anyOf(unicodeTLDs...) + `)`
+	tlds := `(?:(?i)(?:` + punycode + `|` + anyOf(append(asciiTLDs, PseudoTLDs...)...) + `)\b|` + anyOf(unicodeTLDs...) + `)`
 	domain := subdomain + tlds
 
 	hostName := `(?:` + domain + `|\[` + ipv6Addr + `\]|\b` + ipv4Addr + `\b)`

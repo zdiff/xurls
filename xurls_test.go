@@ -252,8 +252,8 @@ func TestRegexes(t *testing.T) {
 		{`test.xn-foo`, nil},
 		{`test.xn--`, nil},
 		{`foo.xn----7sbab.xn--p1ai`, true},
-		{`foo.xn--p1ai-.`, `foo.xn--p1ai-`}, // TODO: stop before the hyphen
-		{`foo.xn---`, true},                 // TODO: no match
+		{`foo.xn--p1ai-.`, `foo.xn--p1ai`},
+		{`foo.xn---`, nil},
 		{`foo.com/`, true},
 		{`1.1.1.1`, true},
 		{`10.50.23.250`, true},
