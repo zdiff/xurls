@@ -204,6 +204,8 @@ func relaxedExp() string {
 	webURL := hostName + port + `(?:[/?#]` + pathCont + `|/)?`
 	// Leave out scripts written without spaces, such as Han or Thai,
 	// so that an email does not take in the text before it.
+	// Other scripts such as Hangul or Arabic are left out too, which is a known
+	// limitation, but such email addresses are rare in practice.
 	atom := `[\p{Latin}\p{Greek}\p{Cyrillic}\p{Inherited}0-9_%\-+]+`
 	email := `(?P<relaxedEmail>` + atom + `(?:[.']` + atom + `)*@` + domain + `)`
 	return strictExp() + `|` + webURL + `|` + email + `|` + ipv6AddrMinusEmpty
