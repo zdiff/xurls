@@ -44,38 +44,54 @@ const (
 	octet     = `(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])`
 	ipv4Addr  = octet + `\.` + octet + `\.` + octet + `\.` + octet
 
-	// ipv6Addr is based on https://datatracker.ietf.org/doc/html/rfc4291#section-2.2
-	// with a specific alternative for each valid count of leading 16-bit hexadecimal "chomps"
-	// that have not been replaced with a `::` elision.
-	// Word boundaries at either end avoid matching within code like `std::cout`.
-	h4                 = `[0-9a-fA-F]{1,4}`
-	ipv6AddrMinusEmpty = `(?:` +
-		// 7 colon-terminated chomps, followed by a final chomp or the rest of an elision.
-		`\b(?:` + h4 + `:){7}(?:` + h4 + `\b|:\B)|` +
-		// 6 chomps, followed by an IPv4 address or elision with final chomp or final elision.
-		`\b(?:` + h4 + `:){6}(?:` + ipv4Addr + `\b|:` + h4 + `\b|:\B)|` +
-		// 5 chomps, followed by an elision with optional IPv4 or up to 2 final chomps.
-		`\b(?:` + h4 + `:){5}(?::` + ipv4Addr + `\b|(?::` + h4 + `){1,2}\b|:\B)|` +
-		// 4 chomps, followed by an elision with optional IPv4 (optionally preceded by a chomp) or
-		// up to 3 final chomps.
-		`\b(?:` + h4 + `:){4}(?:(?::` + h4 + `){0,1}:` + ipv4Addr + `\b|(?::` + h4 + `){1,3}\b|:\B)|` +
-		// 3 chomps, followed by an elision with optional IPv4 (preceded by up to 2 chomps) or
-		// up to 4 final chomps.
-		`\b(?:` + h4 + `:){3}(?:(?::` + h4 + `){0,2}:` + ipv4Addr + `\b|(?::` + h4 + `){1,4}\b|:\B)|` +
-		// 2 chomps, followed by an elision with optional IPv4 (preceded by up to 3 chomps) or
-		// up to 5 final chomps.
-		`\b(?:` + h4 + `:){2}(?:(?::` + h4 + `){0,3}:` + ipv4Addr + `\b|(?::` + h4 + `){1,5}\b|:\B)|` +
-		// 1 chomp, followed by an elision with optional IPv4 (preceded by up to 4 chomps) or
-		// up to 6 final chomps.
-		`\b(?:` + h4 + `:){1}(?:(?::` + h4 + `){0,4}:` + ipv4Addr + `\b|(?::` + h4 + `){1,6}\b|:\B)|` +
-		// elision, followed by optional IPv4 (preceded by up to 5 chomps) or
-		// up to 7 final chomps.
-		// `:` is an intentionally omitted alternative, to avoid matching `::`.
-		`\B:(?:(?::` + h4 + `){0,5}:` + ipv4Addr + `\b|(?::` + h4 + `){1,7}\b)` +
-		`)`
-	ipv6Addr = `(?:` + ipv6AddrMinusEmpty + `|::)`
-	port     = `(?::[0-9]+)?`
+	// h4 matches a 16-bit hexadecimal "chomp" in an IPv6 address.
+	h4   = `[0-9a-fA-F]{1,4}`
+	port = `(?::[0-9]+)?`
 )
+
+// ipv6AddrMinusEmpty matches an IPv6 address as described in
+// https://datatracker.ietf.org/doc/html/rfc4291#section-2.2,
+// made of eight 16-bit hexadecimal "chomps", where the last two may be written
+// as an IPv4 address, and a `::` elision may replace one or more of them.
+// It leaves out `::`, the empty address.
+// Word boundaries at either end avoid matching within code like `std::cout`.
+//
+// The expression is a trie on the leading chomps, to keep it small.
+func ipv6AddrMinusEmpty() string {
+	return `(?:\b` + h4 + `:(?:` + ipv6BeforeIPv4(1) + ipv4Addr + `\b|` + ipv6WithoutIPv4(1) + `)|` +
+		// A leading elision, followed by an IPv4 address (preceded by up to 5 chomps)
+		// or up to 7 chomps.
+		`\B::(?:` + upTo(5, h4+`:`) + ipv4Addr + `\b|` + h4 + upTo(6, `:`+h4) + `\b))`
+}
+
+// ipv6BeforeIPv4 matches what follows k leading chomps in an IPv6 address
+// ending in an IPv4 address, up to the IPv4 address.
+func ipv6BeforeIPv4(k int) string {
+	if k == 6 {
+		return ""
+	}
+	// Another chomp, or an elision followed by up to 5-k chomps.
+	return `(?:` + h4 + `:` + ipv6BeforeIPv4(k+1) + `|:` + upTo(5-k, h4+`:`) + `)`
+}
+
+// ipv6WithoutIPv4 matches what follows k leading chomps in an IPv6 address
+// not ending in an IPv4 address.
+func ipv6WithoutIPv4(k int) string {
+	if k == 7 {
+		// A final chomp, or a final elision.
+		return `(?:` + h4 + `\b|:\B)`
+	}
+	// Another chomp, or an elision either final or followed by up to 7-k chomps.
+	return `(?:` + h4 + `:` + ipv6WithoutIPv4(k+1) + `|:(?:\B|` + h4 + upTo(6-k, `:`+h4) + `\b))`
+}
+
+// upTo matches exp repeated up to n times.
+func upTo(n int, exp string) string {
+	if n == 0 {
+		return ""
+	}
+	return fmt.Sprintf(`(?:%s){0,%d}`, exp, n)
+}
 
 // pathCont matches the rest of a URL after its scheme or host.
 var pathCont = `(?:[` + midIChar + `]*(?:` + balanced(3) + `|` + balancedUcs() + `|[` + endIChar + `]))+`
@@ -202,7 +218,8 @@ func relaxedExp() string {
 
 	// See https://www.rfc-editor.org/rfc/rfc6874#section-2 for zone IDs.
 	zoneID := `(?:%25[` + unreservedChar + `%]+)?`
-	hostName := `(?:` + domain + `|\[` + ipv6Addr + zoneID + `\]|\b` + ipv4Addr + `\b)`
+	ipv6 := ipv6AddrMinusEmpty()
+	hostName := `(?:` + domain + `|\[(?:` + ipv6 + `|::)` + zoneID + `\]|\b` + ipv4Addr + `\b)`
 	webURL := hostName + port + `(?:[/?#]` + pathCont + `|/)?`
 	// Leave out scripts written without spaces, such as Han or Thai,
 	// so that an email does not take in the text before it.
@@ -210,7 +227,7 @@ func relaxedExp() string {
 	// limitation, but such email addresses are rare in practice.
 	atom := `[\p{Latin}\p{Greek}\p{Cyrillic}\p{Inherited}0-9_%\-+]+`
 	email := `(?P<relaxedEmail>` + atom + `(?:[.']` + atom + `)*@` + domain + `)`
-	return strictExp() + `|` + webURL + `|` + email + `|` + ipv6AddrMinusEmpty
+	return strictExp() + `|` + webURL + `|` + email + `|` + ipv6
 }
 
 // Strict produces a regexp that matches any URL with a scheme in the
