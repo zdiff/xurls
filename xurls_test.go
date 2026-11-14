@@ -213,6 +213,15 @@ var constantTestCases = []testCase{
 	{`“go to http://foo.com/path.”`, `http://foo.com/path`},
 	{`http://foo.com/a”b`, true},
 	{`http://foo.com/🐼`, true},
+	{"http://foo.com/a\u200f", true},  // TODO: drop the bidi mark
+	{"http://foo.com/a\u202eb", true}, // TODO: stop at the bidi override
+	{"http://foo.com/a\u200bb", true}, // TODO: stop at the zero-width space
+	{"http://foo.com/a\ufeff", true},  // TODO: drop the BOM
+	{"http://foo.com/a\u200c", true},  // TODO: drop the trailing ZWNJ
+	{"http://foo.com/a\u00ad", true},  // TODO: drop the soft hyphen
+	{"http://foo.com/a\u00adb", true},
+	{"http://foo.com/ᠪᠠ\u180eᠡ", true},
+	{"http://foo.com/می\u200cخواهم", true},
 	{`https://shmibbles.me/tmp/自殺でも？.png`, true},
 	{`randomtexthttp://foo.bar/etc`, "http://foo.bar/etc"},
 	{`postgres://user:pass@host.com:5432/path?k=v#f`, true},
