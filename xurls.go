@@ -198,7 +198,9 @@ func relaxedExp() string {
 	tlds := `(?:(?i)(?:` + punycode + `|` + anyOf(append(asciiTLDs, PseudoTLDs...)...) + `)\b|` + anyOf(unicodeTLDs...) + `)`
 	domain := subdomain + tlds
 
-	hostName := `(?:` + domain + `|\[` + ipv6Addr + `\]|\b` + ipv4Addr + `\b)`
+	// See https://www.rfc-editor.org/rfc/rfc6874#section-2 for zone IDs.
+	zoneID := `(?:%25[` + unreservedChar + `%]+)?`
+	hostName := `(?:` + domain + `|\[` + ipv6Addr + zoneID + `\]|\b` + ipv4Addr + `\b)`
 	webURL := hostName + port + `(?:[/?#]` + pathCont + `|/)?`
 	// Leave out scripts written without spaces, such as Han or Thai,
 	// so that an email does not take in the text before it.

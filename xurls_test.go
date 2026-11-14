@@ -375,7 +375,7 @@ func TestRegexes(t *testing.T) {
 		{`foo.com:8080?key=value#section`, true},
 		{`1.2.3.4?key=value`, true},
 		{`[::1]#section`, true},
-		{`[fe80::1%25eth0]:8080/path`, `fe80::1`}, // TODO: match whole
+		{`[fe80::1%25eth0]:8080/path`, true},
 		{`test.foo.com`, true},
 		{`test.foo.com/path`, true},
 		{`test.foo.com/path/more/`, true},
