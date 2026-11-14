@@ -33,11 +33,13 @@ const (
 	midIChar            = `/?#` + midIPathSegmentChar + iPrivateChar
 	endIChar            = `/#` + endIPathSegmentChar + iPrivateChar
 
-	letter    = `\p{L}`
-	mark      = `\p{M}`
-	number    = `\p{N}`
-	iriChar   = letter + mark + number
-	iri       = `[` + iriChar + `](?:[` + iriChar + `\-_]*[` + iriChar + `])?`
+	letter  = `\p{L}`
+	mark    = `\p{M}`
+	number  = `\p{N}`
+	iriChar = letter + mark + number
+	// iri repeats the first class rather than adding a final copy,
+	// so that fewer threads test the large class at each position.
+	iri       = `[` + iriChar + `]+(?:[\-_]+[` + iriChar + `]+)*`
 	subdomain = `(?:` + iri + `\.)+`
 	octet     = `(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])`
 	ipv4Addr  = octet + `\.` + octet + `\.` + octet + `\.` + octet
