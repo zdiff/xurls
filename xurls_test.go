@@ -213,12 +213,12 @@ var constantTestCases = []testCase{
 	{`“go to http://foo.com/path.”`, `http://foo.com/path`},
 	{`http://foo.com/a”b`, true},
 	{`http://foo.com/🐼`, true},
-	{"http://foo.com/a\u200f", true},  // TODO: drop the bidi mark
-	{"http://foo.com/a\u202eb", true}, // TODO: stop at the bidi override
-	{"http://foo.com/a\u200bb", true}, // TODO: stop at the zero-width space
-	{"http://foo.com/a\ufeff", true},  // TODO: drop the BOM
-	{"http://foo.com/a\u200c", true},  // TODO: drop the trailing ZWNJ
-	{"http://foo.com/a\u00ad", true},  // TODO: drop the soft hyphen
+	{"http://foo.com/a\u200f", "http://foo.com/a"},
+	{"http://foo.com/a\u202eb", "http://foo.com/a"},
+	{"http://foo.com/a\u200bb", "http://foo.com/a"},
+	{"http://foo.com/a\ufeff", "http://foo.com/a"},
+	{"http://foo.com/a\u200c", "http://foo.com/a"},
+	{"http://foo.com/a\u00ad", "http://foo.com/a"},
 	{"http://foo.com/a\u00adb", true},
 	{"http://foo.com/ᠪᠠ\u180eᠡ", true},
 	{"http://foo.com/می\u200cخواهم", true},

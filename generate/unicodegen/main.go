@@ -106,11 +106,16 @@ func writeUnicode() error {
 		return ranges
 	}
 
-	// sepFreeRanges excludes separators from rfc3987Ranges.
+	// sepFreeRanges excludes separators from rfc3987Ranges, as well as the bidi
+	// controls, which RFC 3987 forbids, and the zero-width space and BOM.
 	sepFreeRanges := slices.Clone(rfc3987Ranges)
-	visit(unicode.Z, func(cp rune) {
-		sepFreeRanges = removeRune(sepFreeRanges, cp)
-	})
+	for _, rt := range []*unicode.RangeTable{unicode.Z, unicode.Bidi_Control} {
+		visit(rt, func(cp rune) {
+			sepFreeRanges = removeRune(sepFreeRanges, cp)
+		})
+	}
+	sepFreeRanges = removeRune(sepFreeRanges, '\u200b')
+	sepFreeRanges = removeRune(sepFreeRanges, '\ufeff')
 
 	// Like ASCII brackets, these are only allowed in balanced pairs.
 	var wellCJK []string
@@ -122,9 +127,9 @@ func writeUnicode() error {
 
 	// puncFreeRanges also excludes punctuation other than dashes and connectors,
 	// such as "." or "”", which may end a sentence or close brackets or quotes
-	// around a URL.
+	// around a URL, as well as invisible format characters like the soft hyphen.
 	puncFreeRanges := slices.Clone(sepFreeRanges)
-	for _, rt := range []*unicode.RangeTable{unicode.Po, unicode.Ps, unicode.Pe, unicode.Pi, unicode.Pf} {
+	for _, rt := range []*unicode.RangeTable{unicode.Po, unicode.Ps, unicode.Pe, unicode.Pi, unicode.Pf, unicode.Cf} {
 		visit(rt, func(cp rune) {
 			puncFreeRanges = removeRune(puncFreeRanges, cp)
 		})
