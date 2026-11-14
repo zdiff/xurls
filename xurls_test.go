@@ -384,8 +384,8 @@ func TestRegexes(t *testing.T) {
 		{`foo.com/path_(more)/more`, true},
 		{`foo.com/path_(more)/end)`, `foo.com/path_(more)/end`},
 		{`www.foo.com`, true},
-		{`my_server.local`, `server.local`},      // TODO: match whole
-		{`a_b_c.foo.com/path`, `c.foo.com/path`}, // TODO: match whole
+		{`my_server.local`, true},
+		{`a_b_c.foo.com/path`, true},
 		{`_dmarc.example.com`, `dmarc.example.com`},
 		{`__init__.py`, nil},
 		{` foo.com/bar `, `foo.com/bar`},
