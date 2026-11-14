@@ -184,6 +184,7 @@ var constantTestCases = []testCase{
 	{`http://1.1.1.1:8080/path`, true},
 	{`http://[1080::8:800:200c:417a]/path`, true},
 	{`http://[1080::8:800:200c:417a]:8080/path`, true},
+	{`http://[fe80::1%25eth0]:8080/path`, true},
 
 	// scheme://IPv6_addr is not valid per RFC 3987, but is supported anyway (for now).
 	{`http://1080::8:800:200c:417a/path`, true},
@@ -374,6 +375,7 @@ func TestRegexes(t *testing.T) {
 		{`foo.com:8080?key=value#section`, true},
 		{`1.2.3.4?key=value`, true},
 		{`[::1]#section`, true},
+		{`[fe80::1%25eth0]:8080/path`, `fe80::1`}, // TODO: match whole
 		{`test.foo.com`, true},
 		{`test.foo.com/path`, true},
 		{`test.foo.com/path/more/`, true},
