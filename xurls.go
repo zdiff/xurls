@@ -5,6 +5,7 @@
 package xurls
 
 import (
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -17,8 +18,8 @@ import (
 //go:generate go run ./generate/unicodegen
 
 const (
-	// pathCont is based on https://www.rfc-editor.org/rfc/rfc3987#section-2.2
-	// but does not match separators anywhere or most punctuation in final position,
+	// These are based on https://www.rfc-editor.org/rfc/rfc3987#section-2.2
+	// but do not match separators anywhere or most punctuation in final position,
 	// to avoid creating asymmetries like
 	// `Did you know that **<a href="...">https://example.com/**</a> is reserved for documentation?`
 	// from `Did you know that **https://example.com/** is reserved for documentation?`.
@@ -31,11 +32,6 @@ const (
 	iPrivateChar        = `\x{E000}-\x{F8FF}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}`
 	midIChar            = `/?#` + midIPathSegmentChar + iPrivateChar
 	endIChar            = `/#` + endIPathSegmentChar + iPrivateChar
-	wellParen           = `\((?:[` + midIChar + `]|\([` + midIChar + `]*\))*\)`
-	wellBrack           = `\[(?:[` + midIChar + `]|\[[` + midIChar + `]*\])*\]`
-	wellBrace           = `\{(?:[` + midIChar + `]|\{[` + midIChar + `]*\})*\}`
-	wellAll             = wellParen + `|` + wellBrack + `|` + wellBrace + `|` + wellCJK
-	pathCont            = `(?:[` + midIChar + `]*(?:` + wellAll + `|[` + endIChar + `]))+`
 
 	letter    = `\p{L}`
 	mark      = `\p{M}`
@@ -78,6 +74,34 @@ const (
 	ipv6Addr = `(?:` + ipv6AddrMinusEmpty + `|::)`
 	port     = `(?::[0-9]+)?`
 )
+
+// pathCont matches the rest of a URL after its scheme or host.
+var pathCont = `(?:[` + midIChar + `]*(?:` + balanced(3) + `|` + balancedUcs() + `|[` + endIChar + `]))+`
+
+// balanced matches ASCII brackets in balanced pairs, nested up to depth levels.
+func balanced(depth int) string {
+	inner := ""
+	if depth > 1 {
+		inner = `|` + balanced(depth-1)
+	}
+	return `\((?:[` + midIChar + `]` + inner + `)*\)|` +
+		`\[(?:[` + midIChar + `]` + inner + `)*\]|` +
+		`\{(?:[` + midIChar + `]` + inner + `)*\}`
+}
+
+// balancedUcs matches the pairs in [ucsBracketPairs], which may contain
+// balanced ASCII brackets.
+func balancedUcs() string {
+	pairs := []rune(ucsBracketPairs)
+	var b strings.Builder
+	for i := 0; i < len(pairs); i += 2 {
+		if i > 0 {
+			b.WriteByte('|')
+		}
+		fmt.Fprintf(&b, "%c(?:[%s]|%s)*%c", pairs[i], midIChar, balanced(1), pairs[i+1])
+	}
+	return b.String()
+}
 
 // AnyScheme can be passed to [StrictMatchingScheme] to match any scheme
 // followed by "://", including JDBC subprotocols, as well as the schemes

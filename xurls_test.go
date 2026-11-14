@@ -169,9 +169,9 @@ var constantTestCases = []testCase{
 	{`http://foo.com/path_{even}{more}`, true},
 	{`http://foo.com/path_{even_{nested}}`, true},
 	{`{http://foo.com/path_{even_{nested}}}`, `http://foo.com/path_{even_{nested}}`},
-	{`https://example.com/?q=(a[1])`, `https://example.com/?q=`},           // TODO: match whole
-	{`http://foo.com/a{b[c]}`, `http://foo.com/a`},                         // TODO: match whole
-	{`http://foo.com/path_(even_(more_(nested)))`, `http://foo.com/path_`}, // TODO: match whole
+	{`https://example.com/?q=(a[1])`, true},
+	{`http://foo.com/a{b[c]}`, true},
+	{`http://foo.com/path_(even_(more_(nested)))`, true},
 	{`http://foo.com/path_(even_(more_(too_(deep))))`, `http://foo.com/path_`},
 	{`http://foo.com/path#fragment`, true},
 	{`http://foo.com/emptyfrag#`, true},
@@ -214,10 +214,10 @@ var constantTestCases = []testCase{
 	{`（http://foo.com/a（b））`, `http://foo.com/a（b）`},
 	{`http://foo.com/a（b`, `http://foo.com/a`},
 	{`http://foo.com/a〔`, `http://foo.com/a`},
-	{`http://foo.com/〔x〕`, `http://foo.com/〔x`}, // TODO: match whole
+	{`http://foo.com/〔x〕`, true},
 	{`http://foo.com/a（b「c」）`, `http://foo.com/a`},
 	{`http://foo.com/a(b（c）)`, `http://foo.com/a`},
-	{`http://foo.com/a（b(c)）`, `http://foo.com/a`}, // TODO: match whole
+	{`http://foo.com/a（b(c)）`, true},
 	{`http://foo.com/（a】`, `http://foo.com/`},
 	{`「http://foo.com/a（b」を参照`, `http://foo.com/a`},
 	{`http://foo.com/a⁅b/c`, true},

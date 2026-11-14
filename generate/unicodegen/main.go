@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"slices"
@@ -24,8 +23,9 @@ const allowedUcsChar = {{.withPunc}}
 
 const allowedUcsCharMinusPunc = {{.withoutPunc}}
 
-// wellCJK matches the brackets left out of allowedUcsChar in balanced pairs.
-const wellCJK = {{.wellCJK}}
+// ucsBracketPairs holds pairs of opening and closing brackets,
+// which are left out of allowedUcsChar as they are only allowed in balanced pairs.
+const ucsBracketPairs = {{.bracketPairs}}
 `))
 
 func visit(rt *unicode.RangeTable, fn func(rune)) {
@@ -117,13 +117,27 @@ func writeUnicode() error {
 	sepFreeRanges = removeRune(sepFreeRanges, '\u200b')
 	sepFreeRanges = removeRune(sepFreeRanges, '\ufeff')
 
-	// Like ASCII brackets, these are only allowed in balanced pairs.
-	var wellCJK []string
-	for _, pair := range [][2]rune{{'（', '）'}, {'「', '」'}, {'【', '】'}, {'《', '》'}} {
-		sepFreeRanges = removeRune(sepFreeRanges, pair[0])
-		sepFreeRanges = removeRune(sepFreeRanges, pair[1])
-		wellCJK = append(wellCJK, fmt.Sprintf("`%c[` + midIChar + `]*%c`", pair[0], pair[1]))
-	}
+	// Like ASCII brackets, CJK and full-width brackets are only allowed in
+	// balanced pairs. Pairing more brackets would slow down matching.
+	// Most closing brackets follow their opening bracket, but some are one
+	// code point further, like "］" after "［" and "＼".
+	var bracketPairs strings.Builder
+	visit(unicode.Ps, func(opening rune) {
+		cjk := opening >= 0x3000 && opening <= 0x303F
+		fullWidth := opening >= 0xFF00 && opening <= 0xFFEF
+		if !cjk && !fullWidth {
+			return
+		}
+		for _, closing := range []rune{opening + 1, opening + 2} {
+			if unicode.Is(unicode.Pe, closing) {
+				bracketPairs.WriteRune(opening)
+				bracketPairs.WriteRune(closing)
+				sepFreeRanges = removeRune(sepFreeRanges, opening)
+				sepFreeRanges = removeRune(sepFreeRanges, closing)
+				break
+			}
+		}
+	})
 
 	// puncFreeRanges also excludes punctuation other than dashes and connectors,
 	// such as "." or "”", which may end a sentence or close brackets or quotes
@@ -161,9 +175,9 @@ func writeUnicode() error {
 	}
 	defer f.Close()
 	return tmpl.Execute(f, map[string]string{
-		"withPunc":    strconv.Quote(allowedUcsChar.String()),
-		"withoutPunc": strconv.Quote(allowedUcsCharMinusPunc.String()),
-		"wellCJK":     strings.Join(wellCJK, " + `|` + "),
+		"withPunc":     strconv.Quote(allowedUcsChar.String()),
+		"withoutPunc":  strconv.Quote(allowedUcsCharMinusPunc.String()),
+		"bracketPairs": strconv.Quote(bracketPairs.String()),
 	})
 }
 
