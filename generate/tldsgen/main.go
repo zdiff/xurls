@@ -10,11 +10,12 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"text/template"
+
+	regexp "github.com/wasilibs/go-re2"
 )
 
 const path = "tlds.go"

@@ -4,10 +4,11 @@ go 1.26.0
 
 require (
 	github.com/rogpeppe/go-internal v1.16.0
+	github.com/wasilibs/go-re2 v1.13.0
 	golang.org/x/sync v0.24.0
 )
 
 require (
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
 )

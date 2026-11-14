@@ -5,9 +5,10 @@ package xurls
 
 import (
 	"fmt"
-	"regexp"
 	"sync"
 	"testing"
+
+	regexp "github.com/wasilibs/go-re2"
 )
 
 type testCase struct {

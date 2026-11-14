@@ -6,11 +6,12 @@ package xurls
 
 import (
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
 	"unicode/utf8"
+
+	regexp "github.com/wasilibs/go-re2"
 )
 
 //go:generate go run ./generate/tldsgen

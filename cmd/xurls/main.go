@@ -14,11 +14,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime/debug"
 	"strings"
 	"sync/atomic"
 	"time"
+
+	regexp "github.com/wasilibs/go-re2"
 
 	"mvdan.cc/xurls/v2"
 )
